@@ -1,0 +1,53 @@
+---
+- hosts: DevBox 
+  become: true
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: "Install system packages"
+      yum: name={{ item }} state=present update_cache=yes
+      with_items:
+        - "@development"
+        - "zlib-devel"
+        - "libffi"
+        - "libffi-devel"
+        - "openssl"
+        - "openssl-devel"
+        - "xmlsec1-devel"
+        - "xmlsec1-openssl"
+        - "libtool-ltdl-devel"
+    - name: "Check if Python 3.6 exists"
+      stat:
+        path: /usr/local/bin/python3.6
+      register: python36
+    - name: "Download Python 3.6"
+      unarchive:
+        src: https://www.python.org/ftp/python/3.6.1/Python-3.6.1.tgz
+        dest: "{{ base_dir }}"
+        remote_src: True
+      when: python36.stat.exists == False
+    - name: "Configure Python 3.6"
+      command: ./configure
+      args:
+        chdir: "{{ base_dir }}/{{ python_36_dir }}/"
+      when: python36.stat.exists == False
+    - name: "Do altinstall of Python 3.6"
+      command: make altinstall
+      args:
+        chdir: "{{ base_dir }}/{{ python_36_dir }}/"
+      ignore_errors: yes
+      when: python36.stat.exists == False
+    - name: "Cleanup Python 3.6 files"
+      file:
+        path: "{{ base_dir }}/{{ python_36_dir }}"
+        state: absent
+      when: python36.stat.exists == False
+    - name: "Create project dirs"
+      file:
+        path: "{{ base_dir }}/{{ app_name }}/lambda/local/lib"
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: 0755
+
