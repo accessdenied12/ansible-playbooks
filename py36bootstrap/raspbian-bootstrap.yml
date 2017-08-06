@@ -1,0 +1,50 @@
+---
+- hosts: pi 
+  become: true
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: "Install system packages"
+      apt: name={{ item }} state=present update_cache=yes
+      with_items:
+        - "build-essential"
+        - "tk-dev"
+        - "libncurses5-dev"
+        - "libncursesw5-dev"
+        - "libreadline6-dev"
+        - "libdb5.3-dev"
+        - "libgdbm-dev"
+        - "libsqlite3-dev"
+        - "libssl-dev"
+        - "libbz2-dev"
+        - "libexpat1-dev"
+        - "liblzma-dev"
+        - "zlib1g-dev"
+    - name: "Check if Python 3.6 exists"
+      stat:
+        path: /usr/local/bin/python3.6
+      register: python36
+    - name: "Download Python 3.6"
+      unarchive:
+        src: https://www.python.org/ftp/python/3.6.1/Python-3.6.1.tgz
+        dest: "{{ base_dir }}"
+        remote_src: True
+      when: python36.stat.exists == False
+    - name: "Configure Python 3.6"
+      command: ./configure
+      args:
+        chdir: "{{ base_dir }}/{{ python_36_dir }}/"
+      when: python36.stat.exists == False
+    - name: "Do altinstall of Python 3.6"
+      command: make altinstall
+      args:
+        chdir: "{{ base_dir }}/{{ python_36_dir }}/"
+      ignore_errors: yes
+      when: python36.stat.exists == False
+    - name: "Cleanup Python 3.6 files"
+      file:
+        path: "{{ base_dir }}/{{ python_36_dir }}"
+        state: absent
+      when: python36.stat.exists == False
+
