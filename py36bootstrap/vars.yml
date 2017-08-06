@@ -1,7 +1,7 @@
 ---
-user: ec2-user
+user: 
 base_dir: /home/{{ user }}
 python_36_dir: Python-3.6.1
 libxmlsec1_dir: xmlsec1-1.2.24
-ansible_ssh_private_key_file: /home/arthur/sshkeys/jd-flux7-arthur1.pem
+ansible_ssh_private_key_file: 
 app_name: main
